@@ -1,0 +1,9 @@
+{
+  "name": "jet-lag-companion",
+  "private": "true",
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm start",
+    "build:client": " cd client && npm run build"
+  }
+}
