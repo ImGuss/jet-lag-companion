@@ -11,6 +11,9 @@
   /* FONTS */
   --font-ui: "Inter", system-ui, sans-serif;
   --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+
+  /* RADIUS */
+  --radius-ui: 5px;
 }
 
 * {
