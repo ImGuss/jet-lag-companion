@@ -1,18 +1,24 @@
 import { useRef, useEffect, useState } from 'react'
+import { useGameStateContext } from '../contexts/GameStateContext'
 import mapboxgl from 'mapbox-gl'
 
-import type { GeoJSON } from 'geojson'
+import type { Feature, Polygon, MultiPolygon, Geometry, FeatureCollection } from 'geojson'
 
 import 'mapbox-gl/dist/mapbox-gl.css'
 import './Map.css'
 
+function isPolygonFeature(feature: Feature<Geometry>): feature is Feature<Polygon | MultiPolygon> {
+  return feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'
+}
+
 const Map = () => {
-  const [countries, setCountries] = useState<GeoJSON | null>(null)
-  // const [activeCountryCode, setActiveCountryCode] = useState<string | null>(null)
+  const [countries, setCountries] = useState<FeatureCollection | null>(null)
   const [isMapLoaded, setIsMapLoaded] = useState(false)
 
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
+
+  const { state, setActiveCountry } = useGameStateContext()
 
   useEffect(() => {
     (async () => {
@@ -72,10 +78,22 @@ const Map = () => {
           source: 'all-countries',
           layout: {},
           paint: outOfBoundsPaint,
-          filter: ['!=', ['get', 'ISO_A3_EH'], 'USA']
+          filter: ['!=', ['get', 'ISO_A3_EH'], state.activeCountry?.code]
         })
+      } else {
+        mapRef.current.setFilter(
+          'country-filter',
+          ['!=', ['get', 'ISO_A3_EH'], state.activeCountry?.code]
+        )
       }
-  }, [countries, isMapLoaded])
+
+      //      ------- placeholder for now until i get user input setup --------- v
+      const feature = countries?.features.find(f => f.properties.ISO_A3_EH === 'USA')
+      
+      if (state.activeCountry === null && feature && isPolygonFeature(feature)) {
+        setActiveCountry({ code: 'USA', geometry: feature })
+      }
+  }, [countries, isMapLoaded, state.activeCountry])
 
 
   return (
