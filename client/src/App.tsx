@@ -1,5 +1,7 @@
 import GameStateProvider from './contexts/GameStateContext'
+
 import Map from './components/Map'
+import BottomSheet from './components/BottomSheet'
 
 import './App.css'
 
@@ -9,6 +11,7 @@ function App() {
     <GameStateProvider>
       <section>
         <Map />
+        <BottomSheet />
       </section>
     </GameStateProvider>
   )
