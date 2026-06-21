@@ -18,7 +18,7 @@ const Map = () => {
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
 
-  const { state, setActiveCountry } = useGameStateContext()
+  const { state, addActiveCountry } = useGameStateContext()
 
   useEffect(() => {
     (async () => {
@@ -78,22 +78,22 @@ const Map = () => {
           source: 'all-countries',
           layout: {},
           paint: outOfBoundsPaint,
-          filter: ['!=', ['get', 'ISO_A3_EH'], state.activeCountry?.code]
+          filter: ['!', ['in', ['get', 'ISO_A3_EH'], ['literal', state.activeCountries.map(country => country.code)]]]
         })
       } else {
         mapRef.current.setFilter(
           'country-filter',
-          ['!=', ['get', 'ISO_A3_EH'], state.activeCountry?.code]
+          ['!', ['in', ['get', 'ISO_A3_EH'], ['literal', state.activeCountries.map(country => country.code)]]]
         )
       }
 
       //      ------- placeholder for now until i get user input setup --------- v
       const feature = countries?.features.find(f => f.properties.ISO_A3_EH === 'USA')
       
-      if (state.activeCountry === null && feature && isPolygonFeature(feature)) {
-        setActiveCountry({ code: 'USA', geometry: feature })
+      if (state.activeCountries.length === 0 && feature && isPolygonFeature(feature)) {
+        addActiveCountry({ code: 'USA', geometry: feature })
       }
-  }, [countries, isMapLoaded, state.activeCountry])
+  }, [countries, isMapLoaded, state.activeCountries])
 
 
   return (
