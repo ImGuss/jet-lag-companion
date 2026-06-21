@@ -1,7 +1,24 @@
+:root {
+  /* COLORS */
+  --color-bg: #0F1624;
+  --color-surface: #1A2336;
+  --color-surface-raised: #22304A;
+  --color-border: #2E3F5C;
+  --color-text: #EEE8D5;
+  --color-text-muted: #8A9BB5;
+  --color-accent: #E8833A;
+
+  /* FONTS */
+  --font-ui: "Inter", system-ui, sans-serif;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  font-family: var(--font-ui);
+  color: var(--color-text);
 }
