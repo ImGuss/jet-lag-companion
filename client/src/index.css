@@ -3,10 +3,12 @@
   --color-bg: #0F1624;
   --color-surface: #1A2336;
   --color-surface-raised: #22304A;
+  --color-surface-raised-lighter: #2A3A56;
   --color-border: #2E3F5C;
   --color-text: #EEE8D5;
   --color-text-muted: #8A9BB5;
   --color-accent: #E8833A;
+  --color-accent-raised: #D67025;
 
   /* FONTS */
   --font-ui: "Inter", system-ui, sans-serif;
