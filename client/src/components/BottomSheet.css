@@ -25,6 +25,10 @@
   align-self: center;
 }
 
+.sheet-content {
+  overflow-y: auto;
+}
+
 .sheet-btn {
   width: 3rem;
   height: 3rem;
@@ -97,7 +101,7 @@
 }
 
 .accordion-body.expanded {
-  max-height: 150px;
+  max-height: 200px;
 }
 
 
@@ -127,6 +131,7 @@
   align-items: center;
   justify-content: space-between;
   background-color: var(--color-surface-raised);
+  margin-bottom: 1rem;
 }
 
 .country-display .change-btn {
@@ -150,13 +155,61 @@
   color: var(--color-text-muted);
   border: none;
   padding: 0.5rem;
+  transition: background-color 0.3s ease;
 }
 
 .unit-btn:hover {
+  background-color: var(--color-surface-raised-lighter);
   cursor: pointer;
 }
 
 .unit-btn.active {
   color: var(--color-text);
   background-color: var(--color-accent);
+}
+
+.unit-btn.active:hover {
+  background-color: var(--color-accent-raised);
+}
+
+/* ELIMINATION TOOLS */
+.tools-container {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.tool-btn {
+  padding: 1rem;
+  color: var(--color-text);
+  background-color: var(--color-surface-raised);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-weight: 700;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-ui);
+  transition: background-color 0.3s ease;
+}
+
+.tool-btn:hover {
+  background-color: var(--color-surface-raised-lighter);
+  cursor: pointer;
+}
+
+.tool-btn span {
+  color: var(--color-text-muted);
+  font-weight: 400;
+  text-transform: none;
 }

@@ -106,7 +106,7 @@ const BottomSheet = () => {
               onClick={() => toggleAccordion('isToolsOpen')}
             >
               <span className="accordion-title">
-                Tools
+                Elimination Tools
               </span>
               <ChevronDown
                 className={`accordion-arrow ${accordionToggle.isToolsOpen ? 'open' : ''}`}
@@ -115,8 +115,26 @@ const BottomSheet = () => {
             <div
               className={`accordion-body ${accordionToggle.isToolsOpen ? 'expanded' : ''}`}
             >
-              <div className="setup-grid">
+              <div className="tools-container">
                 <div className="field-label">Tools</div>
+                <div className="tools-grid">
+                  <button className="tool-btn">
+                    Circle
+                    <span>Inside or outside radius</span>
+                    </button>
+                  <button className="tool-btn">
+                    Half Plane
+                    <span>One side of a line</span>
+                    </button>
+                  <button className="tool-btn">
+                    Coast Line
+                    <span>Distance from coast</span>
+                    </button>
+                  <button className="tool-btn">
+                    Station Zone
+                    <span>Pick a station</span>
+                    </button>
+                </div>
               </div>
             </div>
           </div>
