@@ -18,6 +18,8 @@ export const useGameState = () => {
 
   const removeRadiusMarker = (markerId: string) => dispatch({ type: 'REMOVE_RADIUS_MARKER', payload: { id: markerId } })
 
+  const setSelectingCountries = (bool: boolean) => dispatch({  type: 'SET_SELECTING_COUNTRIES', payload: bool})
+
   const resetGameState = () => dispatch({ type: 'RESET_GAME_STATE' })
 
   return {
@@ -26,6 +28,7 @@ export const useGameState = () => {
     removeActiveCountry,
     addRadiusMarker,
     removeRadiusMarker,
+    setSelectingCountries,
     resetGameState
   }
 }

@@ -7,7 +7,8 @@ import type {
 const initialState: GameState = {
   activeCountries: [],
   eliminatedRegions: [],
-  radiusMarkers: []
+  radiusMarkers: [],
+  isSelectingCountries: true
 }
 
 type GameAction =
@@ -15,6 +16,7 @@ type GameAction =
   | { type: 'REMOVE_ACTIVE_COUNTRY'; payload: { code: string } }
   | { type: 'ADD_RADIUS_MARKER'; payload: RadiusMarker }
   | { type: 'REMOVE_RADIUS_MARKER'; payload: { id: string } }
+  | { type: 'SET_SELECTING_COUNTRIES'; payload: boolean }
   | { type: 'RESET_GAME_STATE' }
 
 function gameStateReducer(state: GameState, action: GameAction): GameState {
@@ -38,6 +40,8 @@ function gameStateReducer(state: GameState, action: GameAction): GameState {
         radiusMarkers: state.radiusMarkers.filter(marker => marker.id !== action.payload.id),
         eliminatedRegions: state.eliminatedRegions.filter(region => region.sourceMarkerId !== action.payload.id)
       }
+    case 'SET_SELECTING_COUNTRIES':
+      return { ...state, isSelectingCountries: action.payload }
     case 'RESET_GAME_STATE':
       return initialState
     default:
