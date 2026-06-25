@@ -4,6 +4,7 @@ export interface GameState {
   activeCountries: ActiveCountry[];
   eliminatedRegions: EliminatedRegion[];
   radiusMarkers: RadiusMarker[];
+  isSelectingCountries: boolean;
 }
 
 export interface RadiusMarker {
