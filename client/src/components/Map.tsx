@@ -17,8 +17,11 @@ const Map = () => {
 
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
-
+  
   const { state, addActiveCountry } = useGameStateContext()
+  
+  const selectingCountriesRef = useRef(state.isSelectingCountries)
+  const addActiveCountryRef = useRef(addActiveCountry)
 
   useEffect(() => {
     (async () => {
@@ -94,6 +97,38 @@ const Map = () => {
         addActiveCountry({ code: 'USA', geometry: feature })
       }
   }, [countries, isMapLoaded, state.activeCountries])
+
+  useEffect(() => {
+    selectingCountriesRef.current = state.isSelectingCountries
+    addActiveCountryRef.current = addActiveCountry
+  }, [state.isSelectingCountries, addActiveCountry])
+
+  useEffect(() => {
+    const hoverPaint = {
+      'fill-color': 'red',
+      'opacity': '0.5'
+    }
+    if (selectingCountriesRef) {
+      mapRef.current.on('mouseenter', 'all-countries', () => {
+        mapRef.current.addLayer({
+          id: 'country-hover',
+          type: 'fill',
+          source: 'all-countries',
+          paint: hoverPaint
+        })
+      })
+
+      mapRef.current.addInteraction('country-select', {
+        type: 'click',
+        target: {layerId: 'country-filter'},
+        handler: e => console.log(e)
+      })
+    }
+
+    return () => {
+      mapRef.current.removeInteraction('country-select')
+    }
+  }, [isMapLoaded])
 
 
   return (

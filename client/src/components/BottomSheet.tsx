@@ -20,7 +20,7 @@ const BottomSheet = () => {
     isHistoryOpen: false
   })
 
-  const { state } = useGameStateContext()
+  const { state, setSelectingCountries } = useGameStateContext()
 
   const toggleSheet = () => {
     setIsOpen(prevIsOpen => !prevIsOpen)
@@ -28,6 +28,11 @@ const BottomSheet = () => {
 
   const toggleAccordion = (section: keyof AccordionToggle) => {
     setAccordionToggle(prev => ({...prev, [section]: !prev[section]}))
+  }
+
+  const handleAddClick = () => {
+    toggleAccordion('isToolsOpen')
+    setIsOpen(false)
   }
 
   const renderActiveCountries = state.activeCountries.map(country => {
@@ -77,7 +82,12 @@ const BottomSheet = () => {
                     renderActiveCountries :
                     <span>No country chosen yet.</span>
                   }
-                  <button className="change-btn">Change</button>
+                  <button
+                    className="change-btn"
+                    onClick={handleAddClick}
+                  >
+                    Add
+                  </button>
                 </div>
 
                 <div className="field-label">Units</div>
@@ -121,19 +131,19 @@ const BottomSheet = () => {
                   <button className="tool-btn">
                     Circle
                     <span>Inside or outside radius</span>
-                    </button>
+                  </button>
                   <button className="tool-btn">
                     Half Plane
                     <span>One side of a line</span>
-                    </button>
+                  </button>
                   <button className="tool-btn">
                     Coast Line
                     <span>Distance from coast</span>
-                    </button>
+                  </button>
                   <button className="tool-btn">
                     Station Zone
                     <span>Pick a station</span>
-                    </button>
+                  </button>
                 </div>
               </div>
             </div>
