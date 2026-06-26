@@ -32,6 +32,7 @@ const BottomSheet = () => {
 
   const handleAddClick = () => {
     toggleAccordion('isToolsOpen')
+    setSelectingCountries(true)
     setIsOpen(false)
   }
 
