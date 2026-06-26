@@ -104,29 +104,58 @@ const Map = () => {
   }, [state.isSelectingCountries, addActiveCountry])
 
   useEffect(() => {
-    const hoverPaint = {
-      'fill-color': 'red',
-      'opacity': '0.5'
-    }
-    if (selectingCountriesRef) {
-      mapRef.current.on('mouseenter', 'all-countries', () => {
-        mapRef.current.addLayer({
-          id: 'country-hover',
-          type: 'fill',
-          source: 'all-countries',
-          paint: hoverPaint
-        })
-      })
+    if (!isMapLoaded) { return }
 
-      mapRef.current.addInteraction('country-select', {
-        type: 'click',
-        target: {layerId: 'country-filter'},
-        handler: e => console.log(e)
+    const hoverPaint = {
+      'fill-color': '#E8833A',
+      'opacity': '0.4'
+    }
+
+    if (!mapRef.current.getLayer('country-hover')) {
+      mapRef.current.addLayer({
+        id: 'country-hover',
+        type: 'fill',
+        source: 'all-countries',
+        paint: hoverPaint,
+        filter: ['==', ['get', 'ISO_A3_EH'], '']
       })
     }
+
+    let hoveredCountryId = null
+
+    mapRef.current.addInteraction('country-mouse-move', {
+      type: 'mousemove',
+      target: {layerId: 'country-filter'},
+      handler: ({ feature }) => {
+        if (selectingCountriesRef.current) {
+          if (feature.properties.ISO_A3_EH !== hoveredCountryId) {
+            hoveredCountryId = feature.properties.ISO_A3_EH
+            mapRef.current.setFilter('country-hover', ['==', ['get', 'ISO_A3_EH'], hoveredCountryId])
+          }
+        }
+      }
+    })
+
+    // necessary in order for mouseleave to work
+    mapRef.current.addInteraction('country-mouse-enter', {
+      type: 'mouseenter',
+      target: { layerId: 'country-hover' },
+      handler: () => {}
+    })
+
+    mapRef.current.addInteraction('country-mouse-leave', {
+      type: 'mouseleave',
+      target: { layerId: 'country-hover' },
+      handler: () => {
+        mapRef.current.setFilter('country-hover', ['==', ['get', 'ISO_A3_EH'], ''])
+        hoveredCountryId = null
+      }
+    })
 
     return () => {
-      mapRef.current.removeInteraction('country-select')
+      mapRef.current.removeInteraction('country-mouse-move')
+      mapRef.current.removeInteraction('country-mouse-enter')
+      mapRef.current.removeInteraction('country-mouse-leave')
     }
   }, [isMapLoaded])
 
