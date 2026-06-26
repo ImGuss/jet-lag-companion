@@ -8,7 +8,7 @@ const initialState: GameState = {
   activeCountries: [],
   eliminatedRegions: [],
   radiusMarkers: [],
-  isSelectingCountries: true
+  isSelectingCountries: false
 }
 
 type GameAction =
