@@ -2,7 +2,11 @@ import { useRef, useEffect, useState } from 'react'
 import { useGameStateContext } from '../contexts/GameStateContext'
 import mapboxgl from 'mapbox-gl'
 
+import { Check } from 'lucide-react'
+
 import type { Feature, Polygon, MultiPolygon, Geometry, FeatureCollection } from 'geojson'
+
+import type { ActiveCountry } from '@shared/types'
 
 import 'mapbox-gl/dist/mapbox-gl.css'
 import './Map.css'
@@ -14,6 +18,7 @@ function isPolygonFeature(feature: Feature<Geometry>): feature is Feature<Polygo
 const Map = () => {
   const [countries, setCountries] = useState<FeatureCollection | null>(null)
   const [isMapLoaded, setIsMapLoaded] = useState(false)
+  const [stagedCountries, setStagedCountries] = useState<ActiveCountry[]>([])
 
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
@@ -108,7 +113,12 @@ const Map = () => {
 
     const hoverPaint = {
       'fill-color': '#E8833A',
-      'opacity': '0.4'
+      'opacity': '0.2'
+    }
+
+    const stagedPaint = {
+      'fill-color': '#E8833A',
+      'opacity': '0.5'
     }
 
     if (!mapRef.current.getLayer('country-hover')) {
@@ -118,6 +128,16 @@ const Map = () => {
         source: 'all-countries',
         paint: hoverPaint,
         filter: ['==', ['get', 'ISO_A3_EH'], '']
+      })
+    }
+
+    if (!mapRef.current.getLayer('staged-countries')) {
+      mapRef.current.addLayer({
+        id: 'staged-countries',
+        type: 'fill',
+        source: 'all-countries',
+        paint: stagedPaint,
+        filter: ['in', ['get', 'ISO_A3_EH'], ['literal', stagedCountries.map(c => c.code)]]
       })
     }
 
@@ -152,16 +172,39 @@ const Map = () => {
       }
     })
 
+    mapRef.current.addInteraction('click-country', {
+      type: 'click',
+      target: { layerId: 'country-filter' },
+      handler: ({ feature }) => {
+        if (isPolygonFeature(feature)) {
+          const country: ActiveCountry = {
+            code: feature.properties.ISO_A3_EH,
+            geometry: feature
+          }
+          setStagedCountries(prev => [...prev, country])
+        }
+      }
+    })
+
     return () => {
       mapRef.current.removeInteraction('country-mouse-move')
       mapRef.current.removeInteraction('country-mouse-enter')
       mapRef.current.removeInteraction('country-mouse-leave')
+      mapRef.current.removeInteraction('click-country')
     }
   }, [isMapLoaded])
 
 
   return (
     <>
+      <div className={`confirm-bar ${state.isSelectingCountries ? 'selecting' : ''}`}>
+        <button className="confirm-btn">
+          <span className="confirm-count">{stagedCountries.length}</span>
+          <span className="confirm-label">Confirm Selection</span>
+          <span className="confirm-check"><Check size="0.9rem" /></span>
+        </button>
+      </div>
+
       <div id="map-container" ref={mapContainerRef}/>
     </>
   )
