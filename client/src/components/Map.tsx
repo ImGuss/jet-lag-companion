@@ -27,7 +27,9 @@ const Map = () => {
   
   const selectingCountriesRef = useRef(state.isSelectingCountries)
   const addActiveCountryRef = useRef(addActiveCountry)
+  const stagedCountriesRef = useRef(stagedCountries)
 
+  // fetches country GeoJSON
   useEffect(() => {
     (async () => {
       try {
@@ -46,12 +48,13 @@ const Map = () => {
     })()
   }, [])
   
+  // creates mapbox instance
   useEffect(() => {
     mapRef.current = new mapboxgl.Map({
       accessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN,
       container: mapContainerRef.current,
       center: [-71.06776, 42.35816],
-      zoom: 9
+      zoom: 2
       // minZoom: 9
     })
     mapRef.current.on('load', () => {
@@ -64,111 +67,84 @@ const Map = () => {
     }
   }, [])
 
+  // creates countries layer
   useEffect(() => {
-    const outOfBoundsPaint = {
-      'fill-color': '#000',
-      'fill-opacity': 0.5
+    const countryPaint = {
+      'fill-color': [
+        'case',
+        [
+          'all',
+          ['boolean', ['feature-state', 'selected'], false],
+          ['boolean', ['feature-state', 'hover'], false]
+        ],
+        'rgba(201, 79, 79, 0.65)',
+
+        ['boolean', ['feature-state', 'selected'], false],
+        'rgba(232, 131, 58, 0.65)',
+
+        ['boolean', ['feature-state', 'hover'], false],
+        'rgba(232, 131, 58, 0.35)',
+
+        'rgba(0,0,0,0)'
+      ],
+      'fill-opacity': 1
     }
 
     if (!countries || !isMapLoaded) { return }
 
     if (!mapRef.current.getSource('all-countries')) {
-        mapRef.current.addSource('all-countries', {
-          type: 'geojson',
-          data: countries
-        })
-      }
+      mapRef.current.addSource('all-countries', {
+        type: 'geojson',
+        data: countries,
+        promoteId: 'ISO_A3_EH'
+      })
+    }
 
-      if (!mapRef.current.getLayer('country-filter')) {
-        mapRef.current.addLayer({
-          id: 'country-filter',
-          type:'fill',
-          source: 'all-countries',
-          layout: {},
-          paint: outOfBoundsPaint,
-          filter: ['!', ['in', ['get', 'ISO_A3_EH'], ['literal', state.activeCountries.map(country => country.code)]]]
-        })
-      } else {
-        mapRef.current.setFilter(
-          'country-filter',
-          ['!', ['in', ['get', 'ISO_A3_EH'], ['literal', state.activeCountries.map(country => country.code)]]]
-        )
-      }
-
-      //      ------- placeholder for now until i get user input setup --------- v
-      const feature = countries?.features.find(f => f.properties.ISO_A3_EH === 'USA')
-      
-      if (state.activeCountries.length === 0 && feature && isPolygonFeature(feature)) {
-        addActiveCountry({ code: 'USA', geometry: feature })
-      }
+    if (!mapRef.current.getLayer('country-filter')) {
+      mapRef.current.addLayer({
+        id: 'country-filter',
+        type:'fill',
+        source: 'all-countries',
+        layout: {},
+        paint: countryPaint as mapboxgl.FillLayerSpecification['paint']
+      })
+    }
   }, [countries, isMapLoaded, state.activeCountries])
 
+  // sync refs to state
   useEffect(() => {
     selectingCountriesRef.current = state.isSelectingCountries
     addActiveCountryRef.current = addActiveCountry
-  }, [state.isSelectingCountries, addActiveCountry])
+    stagedCountriesRef.current = stagedCountries
+  }, [state.isSelectingCountries, addActiveCountry, stagedCountries])
 
+  // hover and click handler
   useEffect(() => {
     if (!isMapLoaded) { return }
 
-    const hoverPaint = {
-      'fill-color': '#E8833A',
-      'opacity': '0.2'
-    }
-
-    const stagedPaint = {
-      'fill-color': '#E8833A',
-      'opacity': '0.5'
-    }
-
-    if (!mapRef.current.getLayer('country-hover')) {
-      mapRef.current.addLayer({
-        id: 'country-hover',
-        type: 'fill',
-        source: 'all-countries',
-        paint: hoverPaint,
-        filter: ['==', ['get', 'ISO_A3_EH'], '']
-      })
-    }
-
-    if (!mapRef.current.getLayer('staged-countries')) {
-      mapRef.current.addLayer({
-        id: 'staged-countries',
-        type: 'fill',
-        source: 'all-countries',
-        paint: stagedPaint,
-        filter: ['in', ['get', 'ISO_A3_EH'], ['literal', stagedCountries.map(c => c.code)]]
-      })
-    }
-
     let hoveredCountryId = null
 
-    mapRef.current.addInteraction('country-mouse-move', {
-      type: 'mousemove',
-      target: {layerId: 'country-filter'},
-      handler: ({ feature }) => {
-        if (selectingCountriesRef.current) {
-          if (feature.properties.ISO_A3_EH !== hoveredCountryId) {
-            hoveredCountryId = feature.properties.ISO_A3_EH
-            mapRef.current.setFilter('country-hover', ['==', ['get', 'ISO_A3_EH'], hoveredCountryId])
-          }
-        }
+    mapRef.current.on('mousemove', 'country-filter', (e) => {
+      if (hoveredCountryId !== null) {
+        mapRef.current.setFeatureState(
+          { source: 'all-countries', id: hoveredCountryId },
+          { hover: false }
+        )
       }
+
+      hoveredCountryId = e.features[0].properties.ISO_A3_EH
+      mapRef.current.setFeatureState(
+        { source: 'all-countries', id: hoveredCountryId },
+        { hover: true }
+      )
     })
 
-    // necessary in order for mouseleave to work
-    mapRef.current.addInteraction('country-mouse-enter', {
-      type: 'mouseenter',
-      target: { layerId: 'country-hover' },
-      handler: () => {}
-    })
-
-    mapRef.current.addInteraction('country-mouse-leave', {
-      type: 'mouseleave',
-      target: { layerId: 'country-hover' },
-      handler: () => {
-        mapRef.current.setFilter('country-hover', ['==', ['get', 'ISO_A3_EH'], ''])
-        hoveredCountryId = null
+    mapRef.current.on('mouseleave', 'country-filter', () => {
+      if (hoveredCountryId !== null) {
+        mapRef.current.setFeatureState(
+          { source: 'all-countries', id: hoveredCountryId },
+          { hover: false }
+        )
       }
     })
 
@@ -177,19 +153,18 @@ const Map = () => {
       target: { layerId: 'country-filter' },
       handler: ({ feature }) => {
         if (isPolygonFeature(feature)) {
-          const country: ActiveCountry = {
-            code: feature.properties.ISO_A3_EH,
-            geometry: feature
-          }
-          setStagedCountries(prev => [...prev, country])
+          const featureState = mapRef.current.getFeatureState({
+            id: feature.properties.ISO_A3_EH,
+            source: 'all-countries',
+            sourceLayer: 'country-filter'
+          })
+
+          console.log(featureState.hover)
         }
       }
     })
 
     return () => {
-      mapRef.current.removeInteraction('country-mouse-move')
-      mapRef.current.removeInteraction('country-mouse-enter')
-      mapRef.current.removeInteraction('country-mouse-leave')
       mapRef.current.removeInteraction('click-country')
     }
   }, [isMapLoaded])
