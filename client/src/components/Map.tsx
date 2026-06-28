@@ -116,32 +116,35 @@ const Map = () => {
 
     const isTouchOnly = window.matchMedia('(hover: none)')
 
-    if (!isTouchOnly.matches) {
-      mapRef.current.on('mousemove', 'country-selection', (e) => {
-        mapRef.current.getCanvas().style.cursor = 'pointer'
-        if (hoveredCountryId !== null) {
-          mapRef.current.setFeatureState(
-            { source: 'all-countries', id: hoveredCountryId },
-            { hover: false }
-          )
-        }
-  
-        hoveredCountryId = e.features[0].properties.ISO_A3_EH
+    const mouseMove = (e: mapboxgl.MapMouseEvent) => {
+      mapRef.current.getCanvas().style.cursor = 'pointer'
+      if (hoveredCountryId !== null) {
         mapRef.current.setFeatureState(
           { source: 'all-countries', id: hoveredCountryId },
-          { hover: true }
+          { hover: false }
         )
-      })
-  
-      mapRef.current.on('mouseleave', 'country-selection', () => {
-        mapRef.current.getCanvas().style.cursor = ''
-        if (hoveredCountryId !== null) {
-          mapRef.current.setFeatureState(
-            { source: 'all-countries', id: hoveredCountryId },
-            { hover: false }
-          )
-        }
-      })
+      }
+
+      hoveredCountryId = e.features[0].properties.ISO_A3_EH
+      mapRef.current.setFeatureState(
+        { source: 'all-countries', id: hoveredCountryId },
+        { hover: true }
+      )
+    }
+
+    const mouseLeave = () => {
+      mapRef.current.getCanvas().style.cursor = ''
+      if (hoveredCountryId !== null) {
+        mapRef.current.setFeatureState(
+          { source: 'all-countries', id: hoveredCountryId },
+          { hover: false }
+        )
+      }
+    }
+
+    if (!isTouchOnly.matches) {
+      mapRef.current.on('mousemove', 'country-selection', mouseMove)
+      mapRef.current.on('mouseleave', 'country-selection', mouseLeave)
     }
 
     mapRef.current.addInteraction('click-country', {
@@ -170,12 +173,21 @@ const Map = () => {
     })
 
     return () => {
+      mapRef.current.off('mousemove', 'country-selection', mouseMove)
+      mapRef.current.off('mouseleave', 'country-selection', mouseLeave)
       mapRef.current.removeInteraction('click-country')
     }
   }, [isMapLoaded, state.isSelectingCountries])
 
   const handleConfirmClick = () => {
     addActiveCountries(stagedCountries)
+    stagedCountries.forEach(country => {
+      mapRef.current.setFeatureState(
+        { source: 'all-countries', id: country.code },
+        { selected: false, active: true }
+      )
+    })
+    setStagedCountries([])
     setSelectingCountries(false)
   }
 
