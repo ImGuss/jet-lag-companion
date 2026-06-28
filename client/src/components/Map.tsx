@@ -23,11 +23,7 @@ const Map = () => {
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   
-  const { state, addActiveCountry } = useGameStateContext()
-  
-  const selectingCountriesRef = useRef(state.isSelectingCountries)
-  const addActiveCountryRef = useRef(addActiveCountry)
-  const stagedCountriesRef = useRef(stagedCountries)
+  const { state, addActiveCountries, setSelectingCountries } = useGameStateContext()
 
   // fetches country GeoJSON
   useEffect(() => {
@@ -69,7 +65,7 @@ const Map = () => {
 
   // creates countries layer
   useEffect(() => {
-    const countryPaint = {
+    const countrySelectionPaint = {
       'fill-color': [
         'case',
         [
@@ -80,7 +76,7 @@ const Map = () => {
         'rgba(201, 79, 79, 0.65)',
 
         ['boolean', ['feature-state', 'selected'], false],
-        'rgba(232, 131, 58, 0.65)',
+        'rgba(87, 186, 21, 0.65)',
 
         ['boolean', ['feature-state', 'hover'], false],
         'rgba(232, 131, 58, 0.35)',
@@ -100,66 +96,75 @@ const Map = () => {
       })
     }
 
-    if (!mapRef.current.getLayer('country-filter')) {
+    if (!mapRef.current.getLayer('country-selection')) {
       mapRef.current.addLayer({
-        id: 'country-filter',
+        id: 'country-selection',
         type:'fill',
         source: 'all-countries',
         layout: {},
-        paint: countryPaint as mapboxgl.FillLayerSpecification['paint']
+        paint: countrySelectionPaint as mapboxgl.FillLayerSpecification['paint']
       })
     }
   }, [countries, isMapLoaded, state.activeCountries])
 
-  // sync refs to state
-  useEffect(() => {
-    selectingCountriesRef.current = state.isSelectingCountries
-    addActiveCountryRef.current = addActiveCountry
-    stagedCountriesRef.current = stagedCountries
-  }, [state.isSelectingCountries, addActiveCountry, stagedCountries])
-
   // hover and click handler
   useEffect(() => {
-    if (!isMapLoaded) { return }
+    if (!isMapLoaded || !state.isSelectingCountries) { return }
 
     let hoveredCountryId = null
 
-    mapRef.current.on('mousemove', 'country-filter', (e) => {
-      if (hoveredCountryId !== null) {
+
+    const isTouchOnly = window.matchMedia('(hover: none)')
+
+    if (!isTouchOnly.matches) {
+      mapRef.current.on('mousemove', 'country-selection', (e) => {
+        mapRef.current.getCanvas().style.cursor = 'pointer'
+        if (hoveredCountryId !== null) {
+          mapRef.current.setFeatureState(
+            { source: 'all-countries', id: hoveredCountryId },
+            { hover: false }
+          )
+        }
+  
+        hoveredCountryId = e.features[0].properties.ISO_A3_EH
         mapRef.current.setFeatureState(
           { source: 'all-countries', id: hoveredCountryId },
-          { hover: false }
+          { hover: true }
         )
-      }
-
-      hoveredCountryId = e.features[0].properties.ISO_A3_EH
-      mapRef.current.setFeatureState(
-        { source: 'all-countries', id: hoveredCountryId },
-        { hover: true }
-      )
-    })
-
-    mapRef.current.on('mouseleave', 'country-filter', () => {
-      if (hoveredCountryId !== null) {
-        mapRef.current.setFeatureState(
-          { source: 'all-countries', id: hoveredCountryId },
-          { hover: false }
-        )
-      }
-    })
+      })
+  
+      mapRef.current.on('mouseleave', 'country-selection', () => {
+        mapRef.current.getCanvas().style.cursor = ''
+        if (hoveredCountryId !== null) {
+          mapRef.current.setFeatureState(
+            { source: 'all-countries', id: hoveredCountryId },
+            { hover: false }
+          )
+        }
+      })
+    }
 
     mapRef.current.addInteraction('click-country', {
       type: 'click',
-      target: { layerId: 'country-filter' },
+      target: { layerId: 'country-selection' },
       handler: ({ feature }) => {
         if (isPolygonFeature(feature)) {
-          const featureState = mapRef.current.getFeatureState({
-            id: feature.properties.ISO_A3_EH,
-            source: 'all-countries',
-            sourceLayer: 'country-filter'
-          })
-
-          console.log(featureState.hover)
+          if (feature.state?.selected) {
+            mapRef.current.setFeatureState(
+              { source: 'all-countries', id: feature.id },
+              { selected: false }
+            )
+            setStagedCountries(prev => prev.filter(c => c.code !== feature.properties.ISO_A3_EH))
+          } else {
+            mapRef.current.setFeatureState(
+              { source: 'all-countries', id: feature.id },
+              { selected: true }
+            )
+            setStagedCountries(prev => [...prev, {
+              code: feature.properties.ISO_A3_EH,
+              geometry: feature
+            }])
+          }
         }
       }
     })
@@ -167,13 +172,18 @@ const Map = () => {
     return () => {
       mapRef.current.removeInteraction('click-country')
     }
-  }, [isMapLoaded])
+  }, [isMapLoaded, state.isSelectingCountries])
+
+  const handleConfirmClick = () => {
+    addActiveCountries(stagedCountries)
+    setSelectingCountries(false)
+  }
 
 
   return (
     <>
       <div className={`confirm-bar ${state.isSelectingCountries ? 'selecting' : ''}`}>
-        <button className="confirm-btn">
+        <button className="confirm-btn" onClick={handleConfirmClick}>
           <span className="confirm-count">{stagedCountries.length}</span>
           <span className="confirm-label">Confirm Selection</span>
           <span className="confirm-check"><Check size="0.9rem" /></span>
