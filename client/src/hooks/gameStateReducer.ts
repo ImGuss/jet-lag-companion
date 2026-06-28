@@ -12,7 +12,7 @@ const initialState: GameState = {
 }
 
 type GameAction =
-  | { type: 'ADD_ACTIVE_COUNTRY'; payload: ActiveCountry }
+  | { type: 'ADD_ACTIVE_COUNTRIES'; payload: ActiveCountry[] }
   | { type: 'REMOVE_ACTIVE_COUNTRY'; payload: { code: string } }
   | { type: 'ADD_RADIUS_MARKER'; payload: RadiusMarker }
   | { type: 'REMOVE_RADIUS_MARKER'; payload: { id: string } }
@@ -21,11 +21,11 @@ type GameAction =
 
 function gameStateReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
-    case 'ADD_ACTIVE_COUNTRY':
-      if (state.activeCountries.find(country => country.code === action.payload.code)) {
-        return state
-      }
-      return { ...state, activeCountries: [...state.activeCountries, action.payload] }
+    case 'ADD_ACTIVE_COUNTRIES':
+      const newCountries = action.payload.filter(incoming => (
+        !state.activeCountries.some(existing => existing.code === incoming.code)
+      ))
+      return { ...state, activeCountries: [...state.activeCountries, ...newCountries] }
     case 'REMOVE_ACTIVE_COUNTRY':
       return {
         ...state,

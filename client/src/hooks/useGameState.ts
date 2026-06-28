@@ -10,7 +10,7 @@ import type {
 export const useGameState = () => {
   const [state, dispatch] = useReducer(gameStateReducer, initialState)
 
-  const addActiveCountry = (activeCountry: ActiveCountry) => dispatch({ type: 'ADD_ACTIVE_COUNTRY', payload: activeCountry })
+  const addActiveCountries = (activeCountries: ActiveCountry[]) => dispatch({ type: 'ADD_ACTIVE_COUNTRIES', payload: activeCountries })
 
   const removeActiveCountry = (countryCode: string) => dispatch({ type: 'REMOVE_ACTIVE_COUNTRY', payload: { code: countryCode } })
 
@@ -24,7 +24,7 @@ export const useGameState = () => {
 
   return {
     state,
-    addActiveCountry,
+    addActiveCountries,
     removeActiveCountry,
     addRadiusMarker,
     removeRadiusMarker,
