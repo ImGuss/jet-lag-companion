@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useGameStateContext } from '../contexts/GameStateContext'
 
-import { ChevronUp, ChevronDown, Minus } from 'lucide-react'
+import { ChevronUp, ChevronDown, Minus, X } from 'lucide-react'
 
 import './BottomSheet.css'
 
@@ -20,7 +20,7 @@ const BottomSheet = () => {
     isHistoryOpen: false
   })
 
-  const { state, setSelectingCountries } = useGameStateContext()
+  const { state, removeActiveCountry, setSelectingCountries } = useGameStateContext()
 
   const toggleSheet = () => {
     setIsOpen(prevIsOpen => !prevIsOpen)
@@ -36,9 +36,17 @@ const BottomSheet = () => {
     setIsOpen(false)
   }
 
+  
+
   const renderActiveCountries = state.activeCountries.map(country => {
     return (
-      <span key={country.code}>{country.geometry.properties.NAME}</span>
+      <button
+        key={country.code}
+        className="remove-country-btn"
+        onClick={() => removeActiveCountry(country.code)}
+      >
+        {country.geometry.properties.NAME} <span><X size="0.8rem" /></span>
+      </button>
     )
   })
 
@@ -78,11 +86,13 @@ const BottomSheet = () => {
               <div className="setup-container">
                 <div className="field-label">Countries in Play</div>
                 <div className="country-display">
-                  {
-                    state.activeCountries.length > 0 ?
-                    renderActiveCountries :
-                    <span>No country chosen yet.</span>
-                  }
+                  <div className="country-list-container">
+                    {
+                      state.activeCountries.length > 0 ?
+                      renderActiveCountries :
+                      <span>No country chosen yet.</span>
+                    }
+                  </div>
                   <button
                     className="change-btn"
                     onClick={handleAddClick}
