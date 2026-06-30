@@ -23,7 +23,11 @@ const Map = () => {
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   
-  const { state, addActiveCountries, setSelectingCountries } = useGameStateContext()
+  const {
+    state,
+    addActiveCountries,
+    setSelectingCountries
+  } = useGameStateContext()
 
   // fetches country GeoJSON
   useEffect(() => {
@@ -63,7 +67,7 @@ const Map = () => {
     }
   }, [])
 
-  // creates countries layer
+  // creates country selection layer
   useEffect(() => {
     const countrySelectionPaint = {
       'fill-color': [
@@ -179,6 +183,36 @@ const Map = () => {
     }
   }, [isMapLoaded, state.isSelectingCountries])
 
+  useEffect(() => {
+    if (!isMapLoaded) { return }
+    if (state.activeCountries.length === 0) {
+      if (mapRef.current.getLayer('country-filter')) {
+        mapRef.current.removeLayer('country-filter')
+      }
+      return
+    }
+
+    const countryFilterPaint = {
+      'fill-color': '#000',
+      'fill-opacity': 0.5
+    }
+
+    const countryCodes = state.activeCountries.map(c => c.code)
+
+    if (!mapRef.current.getLayer('country-filter')) {
+      mapRef.current.addLayer({
+        id: 'country-filter',
+        type: 'fill',
+        source: 'all-countries',
+        layout: {},
+        paint: countryFilterPaint,
+        filter: ['!', ['in', ['get', 'ISO_A3_EH'], ['literal', countryCodes]]]
+      })
+    } else {
+      mapRef.current.setFilter('country-filter', ['!', ['in', ['get', 'ISO_A3_EH'], ['literal', countryCodes]]])
+    }
+  }, [state.activeCountries, isMapLoaded])
+
   const handleConfirmClick = () => {
     addActiveCountries(stagedCountries)
     stagedCountries.forEach(country => {
@@ -188,9 +222,9 @@ const Map = () => {
       )
     })
     setStagedCountries([])
+    mapRef.current.removeLayer('country-selection')
     setSelectingCountries(false)
   }
-
 
   return (
     <>
