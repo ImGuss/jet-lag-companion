@@ -1,3 +1,5 @@
+import { unionCountryGeo } from '../lib/geo'
+
 import type {
   GameState,
   RadiusMarker,
@@ -6,6 +8,7 @@ import type {
 
 const initialState: GameState = {
   activeCountries: [],
+  activeGeometry: null,
   eliminatedRegions: [],
   radiusMarkers: [],
   isSelectingCountries: false
@@ -21,31 +24,47 @@ type GameAction =
 
 function gameStateReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
-    case 'ADD_ACTIVE_COUNTRIES':
+    case 'ADD_ACTIVE_COUNTRIES': {
       const newCountries = action.payload.filter(incoming => (
         !state.activeCountries.some(existing => existing.code === incoming.code)
       ))
-      return { ...state, activeCountries: [...state.activeCountries, ...newCountries] }
-    case 'REMOVE_ACTIVE_COUNTRY':
+      const combinedCountries = [...state.activeCountries, ...newCountries]
+      const newGeo = unionCountryGeo(combinedCountries)
       return {
         ...state,
-        activeCountries: state.activeCountries.filter(country => country.code !== action.payload.code)
+        activeCountries: combinedCountries,
+        activeGeometry: newGeo
       }
-    case 'ADD_RADIUS_MARKER':
+    }
+    case 'REMOVE_ACTIVE_COUNTRY': {
+      const filteredCountries = state.activeCountries.filter(c => c.code !== action.payload.code)
+      const newGeo = unionCountryGeo(filteredCountries)
+      return {
+        ...state,
+        activeCountries: filteredCountries,
+        activeGeometry: newGeo
+      }
+    }
+    case 'ADD_RADIUS_MARKER': {
       // TODO: Computer geo.ts
       return { ...state, radiusMarkers: [...state.radiusMarkers, action.payload] }
-    case 'REMOVE_RADIUS_MARKER':
+    }
+    case 'REMOVE_RADIUS_MARKER': {
       return {
         ...state,
         radiusMarkers: state.radiusMarkers.filter(marker => marker.id !== action.payload.id),
         eliminatedRegions: state.eliminatedRegions.filter(region => region.sourceMarkerId !== action.payload.id)
       }
-    case 'SET_SELECTING_COUNTRIES':
+    }
+    case 'SET_SELECTING_COUNTRIES': {
       return { ...state, isSelectingCountries: action.payload }
-    case 'RESET_GAME_STATE':
+    }
+    case 'RESET_GAME_STATE': {
       return initialState
-    default:
+    }
+    default: {
       return state
+    }
   }
 }
 
