@@ -2,7 +2,7 @@ import type { Feature, Polygon, MultiPolygon } from 'geojson'
 
 export interface GameState {
   activeCountries: ActiveCountry[];
-  activeGeometry: Feature<Polygon | MultiPolygon> | null;
+  activeGeometry: ActiveGeometry
   eliminatedRegions: EliminatedRegion[];
   radiusMarkers: RadiusMarker[];
   isSelectingCountries: boolean;
@@ -25,3 +25,5 @@ export interface ActiveCountry {
   code: string;
   geometry: Feature<Polygon | MultiPolygon>
 }
+
+export type ActiveGeometry = Feature<Polygon | MultiPolygon> | null;
