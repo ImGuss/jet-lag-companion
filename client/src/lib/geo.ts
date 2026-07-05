@@ -1,6 +1,7 @@
 import {
   featureCollection,
   difference,
+  intersect,
   union,
   circle,
   booleanContains
@@ -35,12 +36,19 @@ type RadiusValidation =
   | { ok: true }
   | { ok: false; reason: 'full-elim' | 'no-elim' }
 
+type RadiusEliminationArgs = {
+  circleFeature: Feature<Polygon>;
+  // not using ActiveGeometry type because this should not be null
+  activeGeometry: Feature<Polygon | MultiPolygon>;
+  withinRadius: boolean;
+}
+
 // private helpers
 const buildFeatureCollection = (features: Feature<Polygon | MultiPolygon>[]) => {
   return featureCollection(features)
 }
 
-const featureDiff = (subject: Feature<MultiPolygon | Polygon>, clip: Feature<MultiPolygon | Polygon>) => {
+const featureDiff = (subject: Feature<Polygon | MultiPolygon>, clip: Feature<MultiPolygon | Polygon>) => {
   const featureToClip = buildFeatureCollection([subject, clip])
 
   return difference(featureToClip)
@@ -69,10 +77,10 @@ export const unionCountryGeo = (countries: ActiveCountry[]) => {
 
   const countryGeo = countryGeoArray.reduce((acc, curr) => {
     // non-null assertion because practically impossible for two separate countries to combine into a null geometry
-    return union(buildFeatureCollection([acc!, curr]))
+    return union(buildFeatureCollection([acc, curr]))!
   })
 
-  return countryGeo!
+  return countryGeo
 }
 
 export const deriveActiveGeometry = ({
@@ -108,4 +116,22 @@ export const validateRadiusMarker = ({
   }
 
   return { ok: false, reason: 'full-elim' }
+}
+
+export const radiusElimination = ({
+  circleFeature,
+  activeGeometry,
+  withinRadius
+}: RadiusEliminationArgs): Feature<Polygon | MultiPolygon> => {
+  const featureToIntersect = buildFeatureCollection([circleFeature, activeGeometry])
+
+  // non-null assertion since validateRadiusMarker already rules out
+  // intersect returning null
+  const intersectedFeature = intersect(featureToIntersect)!
+
+  if (withinRadius) {
+    return featureDiff(activeGeometry, intersectedFeature)!
+  }
+
+  return intersectedFeature
 }
