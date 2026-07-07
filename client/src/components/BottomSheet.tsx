@@ -45,7 +45,7 @@ const BottomSheet = () => {
         className="remove-country-btn"
         onClick={() => removeActiveCountry(country.code)}
       >
-        {country.geometry.properties.NAME} <span><X size="0.8rem" /></span>
+        {country.geometry.properties?.NAME} <span><X size="0.8rem" /></span>
       </button>
     )
   })

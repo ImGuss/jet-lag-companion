@@ -52,7 +52,7 @@ const Map = () => {
   useEffect(() => {
     mapRef.current = new mapboxgl.Map({
       accessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN,
-      container: mapContainerRef.current,
+      container: mapContainerRef.current!,
       center: [-71.06776, 42.35816],
       zoom: 2
       // minZoom: 9
@@ -63,7 +63,7 @@ const Map = () => {
 
     
     return () => {
-      mapRef.current.remove()
+      mapRef.current?.remove()
     }
   }, [])
 
@@ -90,7 +90,7 @@ const Map = () => {
       'fill-opacity': 1
     }
 
-    if (!countries || !isMapLoaded) { return }
+    if (!countries || !isMapLoaded || !mapRef.current) { return }
 
     if (!mapRef.current.getSource('all-countries')) {
       mapRef.current.addSource('all-countries', {
@@ -113,33 +113,39 @@ const Map = () => {
 
   // hover and click handler
   useEffect(() => {
-    if (!isMapLoaded || !state.isSelectingCountries) { return }
+    if (!isMapLoaded || !state.isSelectingCountries || !mapRef.current) { return }
 
-    let hoveredCountryId = null
+    const map = mapRef.current
+
+    let hoveredCountryId: string | number | null = null
 
 
     const isTouchOnly = window.matchMedia('(hover: none)')
 
     const mouseMove = (e: mapboxgl.MapMouseEvent) => {
-      mapRef.current.getCanvas().style.cursor = 'pointer'
+      if (!e.features || e.features.length === 0) { return }
+      
+      map.getCanvas().style.cursor = 'pointer'
       if (hoveredCountryId !== null) {
-        mapRef.current.setFeatureState(
+        map.setFeatureState(
           { source: 'all-countries', id: hoveredCountryId },
           { hover: false }
         )
       }
 
-      hoveredCountryId = e.features[0].properties.ISO_A3_EH
-      mapRef.current.setFeatureState(
-        { source: 'all-countries', id: hoveredCountryId },
+      // non null assertion due to properties always being part of countries.features
+      const newId = e.features[0].properties!.ISO_A3_EH
+      hoveredCountryId = newId
+      map.setFeatureState(
+        { source: 'all-countries', id: newId },
         { hover: true }
       )
     }
 
     const mouseLeave = () => {
-      mapRef.current.getCanvas().style.cursor = ''
+      map.getCanvas().style.cursor = ''
       if (hoveredCountryId !== null) {
-        mapRef.current.setFeatureState(
+        map.setFeatureState(
           { source: 'all-countries', id: hoveredCountryId },
           { hover: false }
         )
@@ -147,24 +153,27 @@ const Map = () => {
     }
 
     if (!isTouchOnly.matches) {
-      mapRef.current.on('mousemove', 'country-selection', mouseMove)
-      mapRef.current.on('mouseleave', 'country-selection', mouseLeave)
+      map.on('mousemove', 'country-selection', mouseMove)
+      map.on('mouseleave', 'country-selection', mouseLeave)
     }
 
-    mapRef.current.addInteraction('click-country', {
+    map.addInteraction('click-country', {
       type: 'click',
       target: { layerId: 'country-selection' },
       handler: ({ feature }) => {
+        if (!feature) { return }
         if (isPolygonFeature(feature)) {
           if (feature.state?.selected) {
-            mapRef.current.setFeatureState(
-              { source: 'all-countries', id: feature.id },
+            map.setFeatureState(
+              // non null assertion here and below promoteId: ISO_A3_EH
+              // guarantees every feature gets an id
+              { source: 'all-countries', id: feature.id! },
               { selected: false }
             )
             setStagedCountries(prev => prev.filter(c => c.code !== feature.properties.ISO_A3_EH))
           } else {
-            mapRef.current.setFeatureState(
-              { source: 'all-countries', id: feature.id },
+            map.setFeatureState(
+              { source: 'all-countries', id: feature.id! },
               { selected: true }
             )
             setStagedCountries(prev => [...prev, {
@@ -177,14 +186,14 @@ const Map = () => {
     })
 
     return () => {
-      mapRef.current.off('mousemove', 'country-selection', mouseMove)
-      mapRef.current.off('mouseleave', 'country-selection', mouseLeave)
-      mapRef.current.removeInteraction('click-country')
+      mapRef.current?.off('mousemove', 'country-selection', mouseMove)
+      mapRef.current?.off('mouseleave', 'country-selection', mouseLeave)
+      mapRef.current?.removeInteraction('click-country')
     }
   }, [isMapLoaded, state.isSelectingCountries])
 
   useEffect(() => {
-    if (!isMapLoaded) { return }
+    if (!isMapLoaded || !mapRef.current) { return }
     if (state.activeCountries.length === 0) {
       if (mapRef.current.getLayer('country-filter')) {
         mapRef.current.removeLayer('country-filter')
@@ -216,13 +225,14 @@ const Map = () => {
   const handleConfirmClick = () => {
     addActiveCountries(stagedCountries)
     stagedCountries.forEach(country => {
-      mapRef.current.setFeatureState(
+      // non null assertion since this can only fire if map is loaded
+      mapRef.current!.setFeatureState(
         { source: 'all-countries', id: country.code },
         { selected: false, active: true }
       )
     })
     setStagedCountries([])
-    mapRef.current.removeLayer('country-selection')
+    mapRef.current!.removeLayer('country-selection')
     setSelectingCountries(false)
   }
 
