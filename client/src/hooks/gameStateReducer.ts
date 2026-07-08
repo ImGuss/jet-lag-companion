@@ -1,4 +1,10 @@
-import { unionCountryGeo } from '../lib/geo'
+import {
+  buildCircle,
+  unionCountryGeo,
+  deriveActiveGeometry,
+  validateRadiusMarker,
+  radiusElimination
+} from '../lib/geo'
 
 import type {
   GameState,
@@ -46,8 +52,52 @@ function gameStateReducer(state: GameState, action: GameAction): GameState {
       }
     }
     case 'ADD_RADIUS_MARKER': {
-      // TODO: Computer geo.ts
-      return { ...state, radiusMarkers: [...state.radiusMarkers, action.payload] }
+      const { center, radius, withinRadius } = action.payload
+      
+      const radiusMarkerId = crypto.randomUUID()
+      const circle = buildCircle({center: center, radius: radius})
+
+      const isValid = validateRadiusMarker({
+        circleFeature: circle,
+        activeGeometry: state.activeGeometry,
+        withinRadius: withinRadius
+      })
+
+      if (!isValid.ok) {
+        // return some sort of error
+        return state
+      }
+
+      const newRegionGeo = radiusElimination({
+        circleFeature: circle,
+        activeGeometry: state.activeGeometry!,
+        withinRadius: withinRadius
+      })
+
+      const newRegion = {
+        id: crypto.randomUUID(),
+        geometry: newRegionGeo,
+        sourceMarkerId: radiusMarkerId
+      }
+
+      const newRadiusMarker = {
+        id: radiusMarkerId,
+        center: center,
+        radius: radius,
+        withinRadius: withinRadius
+      }
+      const newEliminatedRegions = [...state.eliminatedRegions, newRegion]
+      const newActiveGeo = deriveActiveGeometry({
+        activeCountries: state.activeCountries,
+        eliminatedRegions: newEliminatedRegions
+      })
+      
+      return {
+        ...state,
+        activeGeometry: newActiveGeo,
+        eliminatedRegions: newEliminatedRegions,
+        radiusMarkers: [...state.radiusMarkers, newRadiusMarker]
+      }
     }
     case 'REMOVE_RADIUS_MARKER': {
       return {
