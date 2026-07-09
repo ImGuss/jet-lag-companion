@@ -4,7 +4,10 @@ import {
   intersect,
   union,
   circle,
-  booleanContains
+  booleanContains,
+  booleanIntersects,
+  midpoint,
+  bearing
 } from '@turf/turf'
 
 import type { Feature, MultiPolygon, Polygon } from 'geojson'
@@ -32,7 +35,7 @@ type ValidateRadiusMarkerArgs = {
   withinRadius: boolean;
 }
 
-type RadiusValidation =
+type ElimAreaValidation =
   | { ok: true }
   | { ok: false; reason: 'full-elim' | 'no-elim' }
 
@@ -41,6 +44,20 @@ type RadiusEliminationArgs = {
   // not using ActiveGeometry type because this should not be null
   activeGeometry: Feature<Polygon | MultiPolygon>;
   withinRadius: boolean;
+}
+
+type ValidateElimAreaArgs = {
+  elimFeature: Feature<Polygon>,
+  // not using ActiveGeometry type because this should not be null
+  activeGeometry: Feature<Polygon | MultiPolygon>
+}
+
+type BuildBisectorLineArgs = {
+  startPoint: [number, number],
+  endPoint: [number, number],
+  isCloserToEnd: boolean,
+  // not using ActiveGeometry type because this should not be null
+  activeGeometry: Feature<Polygon | MultiPolygon>
 }
 
 // private helpers
@@ -54,17 +71,7 @@ const featureDiff = (subject: Feature<Polygon | MultiPolygon>, clip: Feature<Mul
   return difference(featureToClip)
 }
 
-// exported helpers
-export const buildCircle = ({ center, radius }: BuildCircleArgs): Feature<Polygon> => {
-  const options = {
-    steps: 64,
-    units: 'meters' as Units
-  }
-
-  return circle(center, radius, options)
-}
-
-export const unionCountryGeo = (countries: ActiveCountry[]) => {
+const unionCountryGeo = (countries: ActiveCountry[]) => {
   if (countries.length === 0) {
     return null
   }
@@ -81,6 +88,24 @@ export const unionCountryGeo = (countries: ActiveCountry[]) => {
   })
 
   return countryGeo
+}
+
+
+// exported helpers
+export const buildCircle = ({ center, radius }: BuildCircleArgs): Feature<Polygon> => {
+  const options = {
+    steps: 64,
+    units: 'meters' as Units
+  }
+
+  return circle(center, radius, options)
+}
+
+export const buildBisectorLine = ({ startPoint, endPoint }: BuildBisectorLineArgs) => {
+  const midPoint = midpoint(startPoint, endPoint)
+
+  const bearingAngle = bearing(startPoint, midPoint)
+
 }
 
 export const deriveActiveGeometry = ({
@@ -104,7 +129,7 @@ export const validateRadiusMarker = ({
   circleFeature,
   activeGeometry,
   withinRadius
-}: ValidateRadiusMarkerArgs): RadiusValidation => {
+}: ValidateRadiusMarkerArgs): ElimAreaValidation => {
   if (!activeGeometry) { return { ok: true } }
 
   const isContained = booleanContains(circleFeature, activeGeometry)
@@ -116,6 +141,20 @@ export const validateRadiusMarker = ({
   }
 
   return { ok: false, reason: 'full-elim' }
+}
+
+export const validateElimArea = ({ elimFeature, activeGeometry }: ValidateElimAreaArgs): ElimAreaValidation => {
+  if (!activeGeometry) { return { ok: true } }
+
+  const isContained = booleanContains(elimFeature, activeGeometry)
+
+  if (isContained) { return { ok: false, reason: 'full-elim' } }
+
+  const intersects = booleanIntersects(elimFeature, activeGeometry)
+
+  if (!intersects) { return { ok: false, reason: 'no-elim' } }
+
+  return { ok: true }
 }
 
 export const radiusElimination = ({
