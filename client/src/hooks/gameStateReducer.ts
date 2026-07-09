@@ -1,6 +1,5 @@
 import {
   buildCircle,
-  unionCountryGeo,
   deriveActiveGeometry,
   validateRadiusMarker,
   radiusElimination
@@ -35,7 +34,10 @@ function gameStateReducer(state: GameState, action: GameAction): GameState {
         !state.activeCountries.some(existing => existing.code === incoming.code)
       ))
       const combinedCountries = [...state.activeCountries, ...newCountries]
-      const newGeo = unionCountryGeo(combinedCountries)
+      const newGeo = deriveActiveGeometry({
+        activeCountries: combinedCountries,
+        eliminatedRegions: state.eliminatedRegions
+      })
       return {
         ...state,
         activeCountries: combinedCountries,
@@ -44,7 +46,10 @@ function gameStateReducer(state: GameState, action: GameAction): GameState {
     }
     case 'REMOVE_ACTIVE_COUNTRY': {
       const filteredCountries = state.activeCountries.filter(c => c.code !== action.payload.code)
-      const newGeo = unionCountryGeo(filteredCountries)
+      const newGeo = deriveActiveGeometry({
+        activeCountries: filteredCountries,
+        eliminatedRegions: state.eliminatedRegions
+      })
       return {
         ...state,
         activeCountries: filteredCountries,
