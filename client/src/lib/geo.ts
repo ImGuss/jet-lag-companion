@@ -7,7 +7,10 @@ import {
   booleanContains,
   booleanIntersects,
   midpoint,
-  bearing
+  bearing,
+  bbox,
+  distance,
+  destination
 } from '@turf/turf'
 
 import type { Feature, MultiPolygon, Polygon } from 'geojson'
@@ -101,11 +104,32 @@ export const buildCircle = ({ center, radius }: BuildCircleArgs): Feature<Polygo
   return circle(center, radius, options)
 }
 
-export const buildBisectorLine = ({ startPoint, endPoint }: BuildBisectorLineArgs) => {
+export const buildBisectorLine = ({
+  startPoint,
+  endPoint,
+  isCloserToEnd,
+  activeGeometry
+}: BuildBisectorLineArgs) => {
   const midPoint = midpoint(startPoint, endPoint)
 
   const bearingAngle = bearing(startPoint, midPoint)
+  const leftBearing = bearingAngle - 90
+  const rightBearing = bearingAngle + 90
+  const reverseBearing = bearingAngle + 180
 
+  const activeBBox = bbox(activeGeometry)
+
+  const from = [activeBBox[0], activeBBox[1]]
+  const to = [activeBBox[2], activeBBox[3]]
+
+  const options = { units: 'meters' as Units }
+  
+  const extensionDistance = distance(from, to, options) * 1.5
+
+  const leftEdge = destination(midPoint, extensionDistance, leftBearing, options)
+  const rightEdge = destination(midPoint, extensionDistance, rightBearing, options)
+  const topEdge = destination(midPoint, extensionDistance, bearingAngle, options)
+  const bottomEdge = destination(midPoint, extensionDistance, reverseBearing, options)
 }
 
 export const deriveActiveGeometry = ({
