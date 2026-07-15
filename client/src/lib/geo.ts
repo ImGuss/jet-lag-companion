@@ -10,7 +10,8 @@ import {
   bearing,
   bbox,
   distance,
-  destination
+  destination,
+  polygon
 } from '@turf/turf'
 
 import type { Feature, MultiPolygon, Polygon } from 'geojson'
@@ -116,20 +117,35 @@ export const buildBisectorLine = ({
   const leftBearing = bearingAngle - 90
   const rightBearing = bearingAngle + 90
   const reverseBearing = bearingAngle + 180
+  const eliminatedBearing = isCloserToEnd ? reverseBearing : bearingAngle
+  
+  const options = { units: 'meters' as Units }
 
+  // calculates a line that goes beyond the active play area
+  // to make sure the full play area gets cut in half
   const activeBBox = bbox(activeGeometry)
-
+  // takes the bottom left edge and the top right edge of active geo
   const from = [activeBBox[0], activeBBox[1]]
   const to = [activeBBox[2], activeBBox[3]]
+  // calculates the distance and multiplies it to elongate the line
+  const extensionDistance = distance(from, to, options) * 1.2
 
-  const options = { units: 'meters' as Units }
-  
-  const extensionDistance = distance(from, to, options) * 1.5
+  const leftEnd = destination(midPoint, extensionDistance, leftBearing, options)
+  const rightEnd = destination(midPoint, extensionDistance, rightBearing, options)
 
-  const leftEdge = destination(midPoint, extensionDistance, leftBearing, options)
-  const rightEdge = destination(midPoint, extensionDistance, rightBearing, options)
-  const topEdge = destination(midPoint, extensionDistance, bearingAngle, options)
-  const bottomEdge = destination(midPoint, extensionDistance, reverseBearing, options)
+
+  const leftEndExt = destination(leftEnd, extensionDistance, eliminatedBearing, options)
+  const rightEndExt = destination(rightEnd, extensionDistance, eliminatedBearing, options)
+
+  const eliminatedPolygon = polygon([[
+    leftEnd.geometry.coordinates,
+    rightEnd.geometry.coordinates,
+    rightEndExt.geometry.coordinates,
+    leftEndExt.geometry.coordinates,
+    leftEnd.geometry.coordinates
+  ]])
+
+  return eliminatedPolygon.geometry
 }
 
 export const deriveActiveGeometry = ({
