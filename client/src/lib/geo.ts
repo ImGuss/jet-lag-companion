@@ -56,7 +56,7 @@ type ValidateElimAreaArgs = {
   activeGeometry: Feature<Polygon | MultiPolygon>
 }
 
-type BuildBisectorLineArgs = {
+type BuildBisectedPolyArgs = {
   startPoint: [number, number],
   endPoint: [number, number],
   isCloserToEnd: boolean,
@@ -105,12 +105,12 @@ export const buildCircle = ({ center, radius }: BuildCircleArgs): Feature<Polygo
   return circle(center, radius, options)
 }
 
-export const buildBisectorLine = ({
+export const buildBisectedPoly = ({
   startPoint,
   endPoint,
   isCloserToEnd,
   activeGeometry
-}: BuildBisectorLineArgs) => {
+}: BuildBisectedPolyArgs) => {
   const midPoint = midpoint(startPoint, endPoint)
 
   const bearingAngle = bearing(startPoint, midPoint)
@@ -132,7 +132,6 @@ export const buildBisectorLine = ({
 
   const leftEnd = destination(midPoint, extensionDistance, leftBearing, options)
   const rightEnd = destination(midPoint, extensionDistance, rightBearing, options)
-
 
   const leftEndExt = destination(leftEnd, extensionDistance, eliminatedBearing, options)
   const rightEndExt = destination(rightEnd, extensionDistance, eliminatedBearing, options)
