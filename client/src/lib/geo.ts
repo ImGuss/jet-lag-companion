@@ -149,7 +149,7 @@ export const buildBisectedPoly = ({
     leftEnd.geometry.coordinates
   ]])
 
-  return eliminatedPolygon.geometry
+  return eliminatedPolygon
 }
 
 export const deriveActiveGeometry = ({
