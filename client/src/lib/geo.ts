@@ -64,6 +64,11 @@ type BuildBisectedPolyArgs = {
   activeGeometry: Feature<Polygon | MultiPolygon>
 }
 
+type BisectorEliminationArgs = {
+  elimFeature: Feature<Polygon>;
+  activeGeometry: Feature<Polygon | MultiPolygon>;
+}
+
 // private helpers
 const buildFeatureCollection = (features: Feature<Polygon | MultiPolygon>[]) => {
   return featureCollection(features)
@@ -201,15 +206,25 @@ export const radiusElimination = ({
   activeGeometry,
   withinRadius
 }: RadiusEliminationArgs): Feature<Polygon | MultiPolygon> => {
-  const featureToIntersect = buildFeatureCollection([circleFeature, activeGeometry])
+  const collection = buildFeatureCollection([circleFeature, activeGeometry])
 
   // non-null assertion since validateRadiusMarker already rules out
   // intersect returning null
-  const intersectedFeature = intersect(featureToIntersect)!
+  const intersectedFeature = intersect(collection)!
 
   if (withinRadius) {
     return featureDiff(activeGeometry, intersectedFeature)!
   }
+
+  return intersectedFeature
+}
+
+export const bisectorElimination = ({ elimFeature, activeGeometry }: BisectorEliminationArgs) => {
+  const collection = buildFeatureCollection([elimFeature, activeGeometry])
+
+  // non-null assertion since validateRadiusMarker already rules out
+  // intersect returning null
+  const intersectedFeature = intersect(collection)!
 
   return intersectedFeature
 }
