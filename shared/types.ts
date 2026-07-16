@@ -5,6 +5,7 @@ export interface GameState {
   activeGeometry: ActiveGeometry
   eliminatedRegions: EliminatedRegion[];
   radiusMarkers: RadiusMarker[];
+  bisectorMarkers: BisectorMarker[];
   isSelectingCountries: boolean;
 }
 
@@ -15,10 +16,18 @@ export interface RadiusMarker {
   withinRadius: boolean;
 }
 
+export interface BisectorMarker {
+  id: string;
+  startPoint: [number, number];
+  endPoint: [number, number];
+  isCloserToEnd: boolean;
+}
+
 export interface EliminatedRegion {
   id: string;
   geometry: Feature<Polygon | MultiPolygon>;
-  sourceMarkerId?: string;
+  sourceMarkerType: 'radius' | 'bisector';
+  sourceMarkerId: string;
 }
 
 export interface ActiveCountry {
