@@ -3,7 +3,8 @@ import { gameStateReducer, initialState } from './gameStateReducer'
 
 import type {
   RadiusMarker,
-  ActiveCountry
+  ActiveCountry,
+  BisectorMarker
 } from '@shared/types'
 
 
@@ -18,6 +19,10 @@ export const useGameState = () => {
 
   const removeRadiusMarker = (markerId: string) => dispatch({ type: 'REMOVE_RADIUS_MARKER', payload: { id: markerId } })
 
+  const addBisectorMarker = (bisectorMarker: BisectorMarker) => dispatch({ type: 'ADD_BISECTOR_MARKER', payload: bisectorMarker })
+
+  const removeBisectorMarker = (bisectorId: string) => dispatch({ type: 'REMOVE_BISECTOR_MARKER', payload: { id: bisectorId } })
+
   const setSelectingCountries = (bool: boolean) => dispatch({  type: 'SET_SELECTING_COUNTRIES', payload: bool})
 
   const resetGameState = () => dispatch({ type: 'RESET_GAME_STATE' })
@@ -28,6 +33,8 @@ export const useGameState = () => {
     removeActiveCountry,
     addRadiusMarker,
     removeRadiusMarker,
+    addBisectorMarker,
+    removeBisectorMarker,
     setSelectingCountries,
     resetGameState
   }
