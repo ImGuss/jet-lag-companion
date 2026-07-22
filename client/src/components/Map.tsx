@@ -6,7 +6,10 @@ import { Check } from 'lucide-react'
 
 import type { Feature, Polygon, MultiPolygon, Geometry, FeatureCollection } from 'geojson'
 
-import type { ActiveCountry } from '@shared/types'
+import type { ActiveCountry, RadiusPreviewProps } from '@shared/types'
+interface MapProps {
+  radiusPreview: RadiusPreviewProps
+}
 
 import 'mapbox-gl/dist/mapbox-gl.css'
 import './Map.css'
@@ -15,7 +18,7 @@ function isPolygonFeature(feature: Feature<Geometry>): feature is Feature<Polygo
   return feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'
 }
 
-const Map = () => {
+const Map = ({ radiusPreview }: MapProps) => {
   const [countries, setCountries] = useState<FeatureCollection | null>(null)
   const [isMapLoaded, setIsMapLoaded] = useState(false)
   const [stagedCountries, setStagedCountries] = useState<ActiveCountry[]>([])
