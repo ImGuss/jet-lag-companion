@@ -32,7 +32,16 @@ export interface EliminatedRegion {
 
 export interface ActiveCountry {
   code: string;
-  geometry: Feature<Polygon | MultiPolygon>
+  geometry: Feature<Polygon | MultiPolygon>;
 }
 
 export type ActiveGeometry = Feature<Polygon | MultiPolygon> | null;
+
+export interface RadiusPreviewProps {
+  center: [number, number] | null;
+  radius: number | null;
+  isPlacing: boolean;
+  setCenter: (center: [number, number] | null) => void;
+  setRadius: (radius: number | null) => void;
+  setIsPlacing: (bool: boolean) => void;
+}
