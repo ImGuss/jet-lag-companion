@@ -9,8 +9,8 @@ export default defineConfig({
     alias: {
       '@shared': path.resolve(__dirname, '../shared')
     }
+  },
+  server: {
+    host: '0.0.0.0'
   }
-  // server: {
-  //   host: '0.0.0.0'
-  // }
 })
