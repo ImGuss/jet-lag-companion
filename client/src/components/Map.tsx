@@ -225,6 +225,27 @@ const Map = ({ radiusPreview }: MapProps) => {
     }
   }, [state.activeCountries, isMapLoaded])
 
+  useEffect(() => {
+    if (!isMapLoaded || !mapRef.current) { return }
+
+    if (!mapRef.current.getSource('radius-preview')) {
+      mapRef.current.addSource('radius-preview', {
+        type: 'geojson',
+        data: undefined,
+      })
+    }
+
+    if (!mapRef.current.getLayer('radius-preview')) {
+      mapRef.current.addLayer({
+        id: 'radius-preview',
+        type: 'fill',
+        source: 'radius-preview',
+        layout: {},
+        paint: {'fill-color': 'red'}
+      })
+    }
+  }, [isMapLoaded])
+
   const handleConfirmClick = () => {
     addActiveCountries(stagedCountries)
     stagedCountries.forEach(country => {
