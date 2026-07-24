@@ -13,6 +13,7 @@ interface MapProps {
 
 import 'mapbox-gl/dist/mapbox-gl.css'
 import './Map.css'
+import { buildCircle } from '@/lib/geo'
 
 function isPolygonFeature(feature: Feature<Geometry>): feature is Feature<Polygon | MultiPolygon> {
   return feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'
@@ -225,13 +226,14 @@ const Map = ({ radiusPreview }: MapProps) => {
     }
   }, [state.activeCountries, isMapLoaded])
 
+  // creates radius preview layer
   useEffect(() => {
     if (!isMapLoaded || !mapRef.current) { return }
 
     if (!mapRef.current.getSource('radius-preview')) {
       mapRef.current.addSource('radius-preview', {
         type: 'geojson',
-        data: undefined,
+        data: { type: 'FeatureCollection', features: [] },
       })
     }
 
@@ -244,7 +246,32 @@ const Map = ({ radiusPreview }: MapProps) => {
         paint: {'fill-color': 'red'}
       })
     }
+
+
   }, [isMapLoaded])
+
+  useEffect(() => {
+    if (!isMapLoaded || !mapRef.current) { return }
+
+    const { center, radius, isPlacing } = radiusPreview
+
+    const radiusSource = mapRef.current.getSource('radius-preview')
+
+    if (radiusSource?.type === 'geojson') {
+      if (!center || !radius || !isPlacing) {
+        radiusSource.setData({
+          type: 'FeatureCollection',
+          features: []
+        })
+        return
+      }
+      const circle = buildCircle({center, radius})
+  
+      radiusSource.setData(circle)
+    }
+
+
+  }, [isMapLoaded, radiusPreview])
 
   const handleConfirmClick = () => {
     addActiveCountries(stagedCountries)
