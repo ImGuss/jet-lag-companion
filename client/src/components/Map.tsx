@@ -11,9 +11,10 @@ interface MapProps {
   radiusPreview: RadiusPreviewProps
 }
 
+import { buildCircle } from '../lib/geo'
+
 import 'mapbox-gl/dist/mapbox-gl.css'
 import './Map.css'
-import { buildCircle } from '@/lib/geo'
 
 function isPolygonFeature(feature: Feature<Geometry>): feature is Feature<Polygon | MultiPolygon> {
   return feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'
