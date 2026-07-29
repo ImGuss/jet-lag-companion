@@ -4,6 +4,7 @@ import GameStateProvider from './contexts/GameStateContext'
 
 import Map from './components/Map'
 import BottomSheet from './components/BottomSheet'
+import SidePanel from './components/SidePanel'
 
 import './App.css'
 
@@ -26,6 +27,12 @@ function App() {
           }}
         />
         <BottomSheet />
+        <SidePanel
+          isOpen={true}
+          onClose={() => console.log('closing')}
+        >
+          <p>Children</p>
+        </SidePanel>
       </section>
     </GameStateProvider>
   )
