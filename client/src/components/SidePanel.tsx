@@ -21,14 +21,19 @@ const SidePanel = (props: SidePanelProps) => {
         className={`expand-panel-btn ${isCollapsed ? 'collapse' : ''}`}
         onClick={() => setIsCollapsed(false)}
       >
-
+        ^
       </button>
       {/* SIDE PANEL */}
-      <section
-        className={`side-panel ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapse' : ''}`}
-      >
-        {children}
-      </section>
+      <div className={`side-panel-bar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapse' : ''}`}>
+        <section className="side-panel">
+          <button
+            onClick={() => setIsCollapsed(true)}
+          >
+            Button
+          </button>
+          {children}
+        </section>
+      </div>
     </>
   )
 }
